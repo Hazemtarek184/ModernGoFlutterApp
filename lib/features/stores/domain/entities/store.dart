@@ -6,6 +6,7 @@ class Store extends Equatable {
   final String email;
   final String address;
   final String phone;
+  final String? profilePhoto;
   final StoreLocation location;
   final List<String> categories;
   final double? distance;
@@ -18,6 +19,7 @@ class Store extends Equatable {
     required this.email,
     required this.address,
     required this.phone,
+    this.profilePhoto,
     required this.location,
     required this.categories,
     this.distance,
@@ -26,7 +28,7 @@ class Store extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, email];
+  List<Object?> get props => [id, name, email, profilePhoto];
 }
 
 class StoreLocation extends Equatable {

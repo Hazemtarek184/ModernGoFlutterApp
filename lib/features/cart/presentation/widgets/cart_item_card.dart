@@ -48,13 +48,13 @@ class CartItemCard extends StatelessWidget {
                             child: SizedBox(
                               width: 20,
                               height: 20,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           ),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.shopping_bag_outlined,
-                                  color: AppColors.primary, size: 28),
+                          errorWidget: (context, url, error) => const Icon(
+                              Icons.shopping_bag_outlined,
+                              color: AppColors.primary,
+                              size: 28),
                         )
                       : const Icon(Icons.shopping_bag_outlined,
                           color: AppColors.primary, size: 28),
@@ -88,7 +88,8 @@ class CartItemCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.radar, size: 14, color: AppColors.primary),
+                        const Icon(Icons.radar,
+                            size: 14, color: AppColors.primary),
                         const SizedBox(width: 4),
                         Text(
                           'Detected · Updated ${item.updatedAgo}',
@@ -142,8 +143,12 @@ class CartItemCard extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(height: 1, thickness: 0.5, color: Colors.grey.shade200,
-              indent: 20, endIndent: 20),
+          Divider(
+              height: 1,
+              thickness: 0.5,
+              color: Colors.grey.shade200,
+              indent: 20,
+              endIndent: 20),
       ],
     );
   }

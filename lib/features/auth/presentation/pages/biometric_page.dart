@@ -88,7 +88,10 @@ class BiometricPage extends StatelessWidget {
                 ),
                 child: const Text(
                   'Verify now',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
               const SizedBox(height: 16),

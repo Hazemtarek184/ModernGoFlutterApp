@@ -7,12 +7,16 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'core/api/api_client.dart';
 import 'core/constants/app_colors.dart';
+import 'core/utils/location_service.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/cart/data/services/socket_service.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
+import 'features/home/data/repositories/home_repository_impl.dart';
+import 'features/home/domain/repositories/home_repository.dart';
+import 'features/home/presentation/bloc/home_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -24,6 +28,7 @@ Future<void> init() async {
 
   // Core
   sl.registerLazySingleton(() => ApiClient(dio: sl(), storage: sl()));
+  sl.registerLazySingleton(() => LocationService());
 
   // Features - Auth
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
@@ -32,6 +37,13 @@ Future<void> init() async {
   // Features - Cart (Socket.IO)
   sl.registerLazySingleton(() => SocketService());
   sl.registerFactory(() => CartBloc(socketService: sl()));
+
+  // Features - Home
+  sl.registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl(sl()));
+  sl.registerLazySingleton(() => HomeBloc(
+        homeRepository: sl(),
+        locationService: sl(),
+      ));
 }
 
 void main() async {

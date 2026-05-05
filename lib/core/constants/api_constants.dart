@@ -1,5 +1,6 @@
 class ApiConstants {
   static const String baseUrl = 'https://modern-go.vercel.app/api';
+  // static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   // Socket.IO Server (real-time cart)
   // Android emulator: 10.0.2.2 maps to host localhost
@@ -29,13 +30,11 @@ class ApiConstants {
       '/products/stores/nearby'; // query param: ?query=
 
   // Helper methods for dynamic paths
-  static String customerProfile(String customerId) =>
-      '/customers/$customerId';
+  static String customerProfile(String customerId) => '/customers/$customerId';
   static String customerPassword(String customerId) =>
       '/customers/$customerId/password';
   static String storeById(String storeId) => '/stores/$storeId';
-  static String storeProducts(String storeId) =>
-      '/stores/$storeId/products';
+  static String storeProducts(String storeId) => '/stores/$storeId/products';
   static String storesByCategory(String category) =>
       '/stores/category/$category';
   static String productStores(String productId) =>

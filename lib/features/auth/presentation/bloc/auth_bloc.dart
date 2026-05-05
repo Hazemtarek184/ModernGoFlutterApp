@@ -28,6 +28,30 @@ class RegisterRequested extends AuthEvent {
 
 class LogoutRequested extends AuthEvent {}
 
+class UpdateProfileRequested extends AuthEvent {
+  final String customerId;
+  final Map<String, dynamic> updateData;
+  UpdateProfileRequested({required this.customerId, required this.updateData});
+  @override
+  List<Object?> get props => [customerId, updateData];
+}
+
+class UpdatePasswordRequested extends AuthEvent {
+  final String customerId;
+  final String currentPassword;
+  final String newPassword;
+  final String confirmPassword;
+  UpdatePasswordRequested({
+    required this.customerId,
+    required this.currentPassword,
+    required this.newPassword,
+    required this.confirmPassword,
+  });
+  @override
+  List<Object?> get props =>
+      [customerId, currentPassword, newPassword, confirmPassword];
+}
+
 /// Check if the stored JWT token is still valid (auto-login on app launch).
 class CheckTokenRequested extends AuthEvent {}
 
@@ -38,13 +62,16 @@ abstract class AuthState extends Equatable {
 }
 
 class AuthInitial extends AuthState {}
+
 class AuthLoading extends AuthState {}
+
 class AuthSuccess extends AuthState {
   final Customer customer;
   AuthSuccess(this.customer);
   @override
   List<Object?> get props => [customer];
 }
+
 class AuthFailure extends AuthState {
   final String message;
   AuthFailure(this.message);
@@ -60,17 +87,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
   final FlutterSecureStorage storage;
 
-  AuthBloc({required this.authRepository, required this.storage}) : super(AuthInitial()) {
+  AuthBloc({required this.authRepository, required this.storage})
+      : super(AuthInitial()) {
     on<CheckTokenRequested>(_onCheckToken);
     on<LoginRequested>(_onLogin);
     on<RegisterRequested>(_onRegister);
     on<LogoutRequested>(_onLogout);
+    on<UpdateProfileRequested>(_onUpdateProfile);
+    on<UpdatePasswordRequested>(_onUpdatePassword);
   }
 
-  Future<void> _onCheckToken(CheckTokenRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onCheckToken(
+      CheckTokenRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     final token = await storage.read(key: 'token');
-    debugPrint('[Auth] Stored token: ${token != null ? "${token.substring(0, 20)}..." : "NULL"}');
+    debugPrint(
+        '[Auth] Stored token: ${token != null ? "${token.substring(0, 20)}..." : "NULL"}');
 
     if (token == null) {
       debugPrint('[Auth] No token found → login required');
@@ -94,7 +126,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated());
       },
       (customer) {
-        debugPrint('[Auth] ✅ Token valid → auto-login as ${customer.firstName}');
+        debugPrint(
+            '[Auth] ✅ Token valid → auto-login as ${customer.firstName}');
         emit(AuthSuccess(customer));
       },
     );
@@ -121,7 +154,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onRegister(RegisterRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onRegister(
+      RegisterRequested event, Emitter<AuthState> emit) async {
     try {
       emit(AuthLoading());
       final result = await authRepository.register(
@@ -156,5 +190,58 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await storage.delete(key: 'token');
     await storage.delete(key: 'customer_id');
     emit(AuthInitial());
+  }
+
+  Future<void> _onUpdateProfile(
+      UpdateProfileRequested event, Emitter<AuthState> emit) async {
+    // We emit AuthLoading but want to keep the current user in state ideally.
+    // However, AuthLoading clears the user unless it's a specific UpdateLoading state.
+    // For simplicity, we just use AuthLoading and then re-emit AuthSuccess.
+    emit(AuthLoading());
+    final result =
+        await authRepository.updateProfile(event.customerId, event.updateData);
+
+    result.fold(
+      (failure) => emit(AuthFailure(failure.message)),
+      (customer) => emit(AuthSuccess(customer)),
+    );
+  }
+
+  Future<void> _onUpdatePassword(
+      UpdatePasswordRequested event, Emitter<AuthState> emit) async {
+    // Current customer might be lost during AuthLoading unless preserved.
+    // We can fetch it from current state or assume UI handles it.
+    // For simplicity since we just want to update password, we'll try to preserve it if possible:
+    Customer? currentCustomer;
+    if (state is AuthSuccess) {
+      currentCustomer = (state as AuthSuccess).customer;
+    }
+
+    emit(AuthLoading());
+    final result = await authRepository.updatePassword(
+      event.customerId,
+      event.currentPassword,
+      event.newPassword,
+      event.confirmPassword,
+    );
+
+    result.fold(
+      (failure) {
+        emit(AuthFailure(failure.message));
+        if (currentCustomer != null) {
+          // Revert to success to allow user to retry without login requirement
+          // emit(AuthSuccess(currentCustomer));
+          // usually UI handles error dialog
+        }
+      },
+      (successMessage) {
+        if (currentCustomer != null) {
+          emit(AuthSuccess(currentCustomer));
+        } else {
+          // Fallback if state was lost
+          add(CheckTokenRequested());
+        }
+      },
+    );
   }
 }

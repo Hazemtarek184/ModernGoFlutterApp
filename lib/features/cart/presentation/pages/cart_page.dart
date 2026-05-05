@@ -66,7 +66,8 @@ class CartPage extends StatelessWidget {
                 Navigator.of(context).pop();
               }
             },
-            child: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
+            child:
+                const Icon(Icons.chevron_left, color: Colors.white, size: 28),
           ),
           const Expanded(
             child: Text(
@@ -79,7 +80,8 @@ class CartPage extends StatelessWidget {
               ),
             ),
           ),
-          const Icon(Icons.shopping_cart_outlined, color: Colors.white, size: 26),
+          const Icon(Icons.shopping_cart_outlined,
+              color: Colors.white, size: 26),
         ],
       ),
     );

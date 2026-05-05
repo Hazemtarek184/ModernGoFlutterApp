@@ -68,7 +68,8 @@ class _LiveScanIndicatorState extends State<LiveScanIndicator>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: widget.isConnected
-                      ? AppColors.primary.withValues(alpha: _pulseAnimation.value)
+                      ? AppColors.primary
+                          .withValues(alpha: _pulseAnimation.value)
                       : Colors.grey,
                 ),
               );

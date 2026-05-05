@@ -6,6 +6,11 @@ import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/core/constants/api_constants.dart';
 import 'package:modern_go/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:modern_go/features/cart/presentation/pages/cart_page.dart';
+import 'package:modern_go/features/home/presentation/pages/home_page.dart';
+import 'package:modern_go/features/profile/presentation/pages/settings_page.dart';
+import 'package:modern_go/features/home/presentation/bloc/home_bloc.dart';
+import 'package:modern_go/features/home/presentation/pages/all_stores_page.dart';
+import 'package:modern_go/features/payment/presentation/pages/payment_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,18 +22,34 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    Center(child: Text('Home', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Stores', style: TextStyle(fontSize: 24))),
-    CartPage(),
-    Center(child: Text('Pay', style: TextStyle(fontSize: 24))),
-    Center(child: Text('Account', style: TextStyle(fontSize: 24))),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     _connectSocket();
+    
+    _pages = [
+      HomePage(
+        onNavigateToStores: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+      ),
+      BlocBuilder<HomeBloc, HomeState>(
+        bloc: GetIt.instance<HomeBloc>(),
+        builder: (context, state) {
+          if (state.status == HomeStatus.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return AllStoresPage(stores: state.stores);
+        },
+      ),
+      const CartPage(),
+      const PaymentPage(),
+      const SettingsPage(),
+    ];
   }
 
   /// Connect to the socket server using the stored JWT token.

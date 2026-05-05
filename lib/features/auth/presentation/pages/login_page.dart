@@ -83,16 +83,19 @@ class _LoginPageState extends State<LoginPage> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           hintText: 'email',
-                          hintStyle: TextStyle(color: Colors.grey.withOpacity(0.6)),
+                          hintStyle:
+                              TextStyle(color: Colors.grey.withOpacity(0.6)),
                           filled: true,
                           fillColor: AppColors.surface,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.darkGreen, width: 0.5),
+                            borderSide: const BorderSide(
+                                color: AppColors.darkGreen, width: 0.5),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.darkGreen, width: 0.5),
+                            borderSide: const BorderSide(
+                                color: AppColors.darkGreen, width: 0.5),
                           ),
                         ),
                       ),
@@ -108,7 +111,8 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 8),
                       Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.darkGreen, width: 0.5),
+                          border: Border.all(
+                              color: AppColors.darkGreen, width: 0.5),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -123,7 +127,8 @@ class _LoginPageState extends State<LoginPage> {
                                   filled: true,
                                   fillColor: AppColors.surface,
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 16),
                                 ),
                               ),
                             ),
@@ -139,13 +144,16 @@ class _LoginPageState extends State<LoginPage> {
                                 });
                               },
                               icon: Icon(
-                                _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
                                 color: Colors.grey,
                                 size: 20,
                               ),
                               label: const Text(
                                 'Show',
-                                style: TextStyle(color: Colors.grey, fontSize: 14),
+                                style:
+                                    TextStyle(color: Colors.grey, fontSize: 14),
                               ),
                             ),
                           ],
@@ -163,9 +171,12 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: isLoading
                             ? null
                             : () {
-                                if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+                                if (_emailController.text.isEmpty ||
+                                    _passwordController.text.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Please fill in all fields')),
+                                    const SnackBar(
+                                        content:
+                                            Text('Please fill in all fields')),
                                   );
                                   return;
                                 }
@@ -184,10 +195,14 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
                             : const Text(
                                 'Log in',
-                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
                               ),
                       );
                     },
@@ -203,7 +218,9 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: const Text(
                       'Don\'t have an account? Sign Up',
-                      style: TextStyle(color: AppColors.darkGreen, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: AppColors.darkGreen,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),

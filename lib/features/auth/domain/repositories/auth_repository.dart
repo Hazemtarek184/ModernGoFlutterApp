@@ -26,6 +26,18 @@ abstract class AuthRepository {
   /// Validates the stored JWT token and returns the customer profile.
   /// Used on app launch for auto-login.
   Future<Either<Failure, Customer>> validateToken();
+
+  Future<Either<Failure, Customer>> updateProfile(
+    String customerId,
+    Map<String, dynamic> updateData,
+  );
+
+  Future<Either<Failure, String>> updatePassword(
+    String customerId,
+    String currentPassword,
+    String newPassword,
+    String confirmPassword,
+  );
 }
 
 class AuthResponse {
