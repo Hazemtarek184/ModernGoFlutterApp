@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:modern_go/features/auth/presentation/pages/login_page.dart';
-import 'package:modern_go/features/auth/presentation/pages/biometric_page.dart';
+import 'package:modern_go/features/auth/presentation/pages/verification_photo_page.dart';
 
 /// Splash screen shown on app launch.
 /// Dispatches [CheckTokenRequested] to validate the stored JWT.
-/// - Valid token → navigates to BiometricPage (then MainNavigation)
+/// - Valid token → navigates to VerificationPhotoPage (then BiometricPage, then MainNavigation)
 /// - Invalid/missing token → navigates to LoginPage
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -28,10 +28,10 @@ class _SplashPageState extends State<SplashPage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthSuccess) {
-          // Token valid — go to biometric then main app
+        if (state is AuthPhotoVerificationRequired) {
+          // Token valid — require live photo verification first
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const BiometricPage()),
+            MaterialPageRoute(builder: (_) => VerificationPhotoPage(customer: state.customer)),
           );
         } else if (state is AuthUnauthenticated || state is AuthFailure) {
           // Token invalid or missing — go to login

@@ -6,6 +6,7 @@ import 'package:modern_go/features/auth/domain/entities/customer.dart';
 import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:modern_go/features/profile/presentation/pages/update_profile_page.dart';
 import 'package:modern_go/features/profile/presentation/pages/change_password_page.dart';
+import 'package:modern_go/features/health_profile/presentation/pages/health_profile_page.dart';
 import 'package:modern_go/features/auth/presentation/pages/login_page.dart'
     as modern_go_login;
 
@@ -87,6 +88,21 @@ class SettingsPage extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (_) =>
                               UpdateProfilePage(customer: customer)),
+                    );
+                  },
+                ),
+                const Divider(
+                    height: 1, thickness: 1, color: Color(0xFFD4EAD1)),
+                ListTile(
+                  leading:
+                      const Icon(Icons.health_and_safety_outlined, color: Colors.black87),
+                  title: const Text('Health Profile',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const HealthProfilePage()),
                     );
                   },
                 ),

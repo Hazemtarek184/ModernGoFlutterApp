@@ -17,6 +17,8 @@ class SocketService {
   final _cartUpdateController = StreamController<CartUpdate>.broadcast();
   final _sessionReplacedController = StreamController<String>.broadcast();
   final _connectionStateController = StreamController<bool>.broadcast();
+  final _checkoutCompletedController = StreamController<String>.broadcast();
+  final _socketErrorController = StreamController<String>.broadcast();
 
   // ─── Public Streams ────────────────────────────────────────────────
 
@@ -31,6 +33,12 @@ class SocketService {
 
   /// Emits true when connected, false when disconnected
   Stream<bool> get connectionState => _connectionStateController.stream;
+
+  /// Emits customerId when checkout is completed
+  Stream<String> get checkoutCompleted => _checkoutCompletedController.stream;
+
+  /// Emits error messages
+  Stream<String> get socketError => _socketErrorController.stream;
 
   /// Whether the socket is currently connected
   bool get isConnected => _socket?.connected ?? false;
@@ -122,10 +130,26 @@ class SocketService {
       _socket = null;
     });
 
+    // ── Checkout event ───────────────────────────────────────────
+
+    socket.on('checkout:completed', (data) {
+      final map = Map<String, dynamic>.from(data as Map);
+      final customerId = map['customerId'] as String? ?? '';
+      _checkoutCompletedController.add(customerId);
+    });
+
     // ── Error event ──────────────────────────────────────────────
 
     socket.on('error', (data) {
-      // Server-side errors — logged silently
+      final map = Map<String, dynamic>.from(data as Map);
+      final message = map['message'] as String? ?? 'Socket Error';
+      _socketErrorController.add(message);
+    });
+    
+    socket.on('socket:error', (data) {
+      final map = Map<String, dynamic>.from(data as Map);
+      final message = map['message'] as String? ?? 'Socket Error';
+      _socketErrorController.add(message);
     });
   }
 
@@ -146,5 +170,7 @@ class SocketService {
     _cartUpdateController.close();
     _sessionReplacedController.close();
     _connectionStateController.close();
+    _checkoutCompletedController.close();
+    _socketErrorController.close();
   }
 }

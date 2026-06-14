@@ -60,6 +60,22 @@ class _SessionReplaced extends CartEvent {
   List<Object?> get props => [message];
 }
 
+/// Internal: checkout completed
+class _CheckoutCompleted extends CartEvent {
+  final String customerId;
+  _CheckoutCompleted(this.customerId);
+  @override
+  List<Object?> get props => [customerId];
+}
+
+/// Internal: socket error received
+class _SocketErrorReceived extends CartEvent {
+  final String message;
+  _SocketErrorReceived(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
 // ─── State ───────────────────────────────────────────────────────────
 
 class CartState extends Equatable {
@@ -67,12 +83,16 @@ class CartState extends Equatable {
   final CartStatus status;
   final String? lastAction; // "pick" or "release"
   final String? sessionReplacedMessage;
+  final bool checkoutCompleted;
+  final String? errorMessage;
 
   const CartState({
     this.items = const [],
     this.status = CartStatus.disconnected,
     this.lastAction,
     this.sessionReplacedMessage,
+    this.checkoutCompleted = false,
+    this.errorMessage,
   });
 
   /// Total number of individual items (sum of quantities)
@@ -86,6 +106,8 @@ class CartState extends Equatable {
     CartStatus? status,
     String? lastAction,
     String? sessionReplacedMessage,
+    bool? checkoutCompleted,
+    String? errorMessage,
   }) {
     return CartState(
       items: items ?? this.items,
@@ -93,12 +115,14 @@ class CartState extends Equatable {
       lastAction: lastAction ?? this.lastAction,
       sessionReplacedMessage:
           sessionReplacedMessage ?? this.sessionReplacedMessage,
+      checkoutCompleted: checkoutCompleted ?? this.checkoutCompleted,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
   List<Object?> get props =>
-      [items, status, lastAction, sessionReplacedMessage];
+      [items, status, lastAction, sessionReplacedMessage, checkoutCompleted, errorMessage];
 }
 
 // ─── Bloc ────────────────────────────────────────────────────────────
@@ -109,6 +133,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   StreamSubscription<CartUpdate>? _cartUpdateSub;
   StreamSubscription<bool>? _connectionSub;
   StreamSubscription<String>? _sessionSub;
+  StreamSubscription<String>? _checkoutSub;
+  StreamSubscription<String>? _errorSub;
 
   CartBloc({required SocketService socketService})
       : _socketService = socketService,
@@ -119,6 +145,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<_CartUpdateReceived>(_onCartUpdateReceived);
     on<_ConnectionStateChanged>(_onConnectionStateChanged);
     on<_SessionReplaced>(_onSessionReplaced);
+    on<_CheckoutCompleted>(_onCheckoutCompleted);
+    on<_SocketErrorReceived>(_onSocketErrorReceived);
   }
 
   void _onConnectRequested(
@@ -145,6 +173,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
     _sessionSub = _socketService.sessionReplaced.listen((message) {
       add(_SessionReplaced(message));
+    });
+
+    _checkoutSub = _socketService.checkoutCompleted.listen((customerId) {
+      add(_CheckoutCompleted(customerId));
+    });
+
+    _errorSub = _socketService.socketError.listen((message) {
+      add(_SocketErrorReceived(message));
     });
 
     // Initiate connection
@@ -201,15 +237,33 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     ));
   }
 
+  void _onCheckoutCompleted(
+    _CheckoutCompleted event,
+    Emitter<CartState> emit,
+  ) {
+    emit(state.copyWith(checkoutCompleted: true, items: [])); // Clear items
+  }
+
+  void _onSocketErrorReceived(
+    _SocketErrorReceived event,
+    Emitter<CartState> emit,
+  ) {
+    emit(state.copyWith(errorMessage: event.message));
+  }
+
   void _cancelSubscriptions() {
     _cartCurrentSub?.cancel();
     _cartUpdateSub?.cancel();
     _connectionSub?.cancel();
     _sessionSub?.cancel();
+    _checkoutSub?.cancel();
+    _errorSub?.cancel();
     _cartCurrentSub = null;
     _cartUpdateSub = null;
     _connectionSub = null;
     _sessionSub = null;
+    _checkoutSub = null;
+    _errorSub = null;
   }
 
   @override

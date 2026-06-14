@@ -215,4 +215,30 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure('An unexpected error occurred: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> verifyPhoto(
+    String customerId,
+    String photoPath,
+  ) async {
+    try {
+      final formData = FormData.fromMap({
+        'verificationPhoto': await MultipartFile.fromFile(
+          photoPath,
+          filename: photoPath.split('/').last,
+        ),
+      });
+
+      await apiClient.post(
+        ApiConstants.customerVerifyPhoto(customerId),
+        data: formData,
+      );
+      
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(ServerFailure(_handleDioError(e)));
+    } catch (e) {
+      return Left(ServerFailure('An unexpected error occurred: $e'));
+    }
+  }
 }

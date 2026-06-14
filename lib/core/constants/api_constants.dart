@@ -29,10 +29,16 @@ class ApiConstants {
   static const String productStoresNearbySearch =
       '/products/stores/nearby'; // query param: ?query=
 
+  // Health Profile Endpoints
+  static const String healthProfiles = '/health-profiles/';
+  static const String healthProfileMe = '/health-profiles/me';
+
   // Helper methods for dynamic paths
   static String customerProfile(String customerId) => '/customers/$customerId';
   static String customerPassword(String customerId) =>
       '/customers/$customerId/password';
+  static String customerVerifyPhoto(String customerId) =>
+      '/customers/$customerId/verify-photo';
   static String storeById(String storeId) => '/stores/$storeId';
   static String storeProducts(String storeId) => '/stores/$storeId/products';
   static String storesByCategory(String category) =>

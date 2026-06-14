@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:modern_go/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:modern_go/features/auth/presentation/pages/verification_photo_page.dart';
 import 'package:modern_go/features/auth/presentation/pages/biometric_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -30,7 +31,11 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.white,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthSuccess) {
+          if (state is AuthPhotoVerificationRequired) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => VerificationPhotoPage(customer: state.customer)),
+            );
+          } else if (state is AuthSuccess) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const BiometricPage()),
             );

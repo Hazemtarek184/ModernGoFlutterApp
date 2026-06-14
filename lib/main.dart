@@ -17,6 +17,11 @@ import 'features/cart/presentation/bloc/cart_bloc.dart';
 import 'features/home/data/repositories/home_repository_impl.dart';
 import 'features/home/domain/repositories/home_repository.dart';
 import 'features/home/presentation/bloc/home_bloc.dart';
+import 'features/health_profile/data/datasources/health_profile_remote_data_source.dart';
+import 'features/health_profile/data/repositories/health_profile_repository_impl.dart';
+import 'features/health_profile/domain/repositories/health_profile_repository.dart';
+import 'features/health_profile/domain/usecases/health_profile_usecases.dart';
+import 'features/health_profile/presentation/bloc/health_profile_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -44,6 +49,22 @@ Future<void> init() async {
         homeRepository: sl(),
         locationService: sl(),
       ));
+
+  // Features - Health Profile
+  sl.registerLazySingleton<HealthProfileRemoteDataSource>(
+      () => HealthProfileRemoteDataSourceImpl(apiClient: sl()));
+  sl.registerLazySingleton<HealthProfileRepository>(
+      () => HealthProfileRepositoryImpl(remoteDataSource: sl()));
+  sl.registerLazySingleton(() => GetHealthProfile(sl()));
+  sl.registerLazySingleton(() => CreateHealthProfile(sl()));
+  sl.registerLazySingleton(() => UpdateHealthProfile(sl()));
+  sl.registerLazySingleton(() => DeleteHealthProfile(sl()));
+  sl.registerFactory(() => HealthProfileBloc(
+        getHealthProfile: sl(),
+        createHealthProfile: sl(),
+        updateHealthProfile: sl(),
+        deleteHealthProfile: sl(),
+      ));
 }
 
 void main() async {
@@ -61,6 +82,7 @@ class ModernGoApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => sl<AuthBloc>()),
         BlocProvider(create: (_) => sl<CartBloc>()),
+        BlocProvider(create: (_) => sl<HealthProfileBloc>()),
       ],
       child: MaterialApp(
         title: 'Modern Go',

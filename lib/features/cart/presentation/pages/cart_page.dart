@@ -20,9 +20,44 @@ class CartPage extends StatelessWidget {
 
           // ── Body ───────────────────────────────────────────────
           Expanded(
-            child: BlocBuilder<CartBloc, CartState>(
-              builder: (context, state) {
-                final isConnected = state.status == CartStatus.connected;
+            child: BlocListener<CartBloc, CartState>(
+              listenWhen: (previous, current) =>
+                  previous.errorMessage != current.errorMessage ||
+                  previous.checkoutCompleted != current.checkoutCompleted,
+              listener: (context, state) {
+                if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.errorMessage!),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+                if (state.checkoutCompleted) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Checkout Successful'),
+                      content: const Text(
+                        'Your shopping session has ended and checkout is complete. A receipt will be available in your account.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close dialog
+                            Navigator.of(context).pop(); // Close cart page
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+              child: BlocBuilder<CartBloc, CartState>(
+                builder: (context, state) {
+                  final isConnected = state.status == CartStatus.connected;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -40,9 +75,10 @@ class CartPage extends StatelessWidget {
               },
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
   }
 
   /// Green gradient header matching the design

@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:modern_go/features/auth/presentation/pages/biometric_page.dart';
+import 'package:modern_go/features/auth/presentation/pages/verification_photo_page.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -72,9 +72,9 @@ class _SignUpPageState extends State<SignUpPage> {
       body: SafeArea(
         child: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthSuccess) {
+            if (state is AuthPhotoVerificationRequired) {
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const BiometricPage()),
+                MaterialPageRoute(builder: (_) => VerificationPhotoPage(customer: state.customer)),
                 (route) => false,
               );
             } else if (state is AuthFailure) {

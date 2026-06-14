@@ -52,6 +52,14 @@ class UpdatePasswordRequested extends AuthEvent {
       [customerId, currentPassword, newPassword, confirmPassword];
 }
 
+class VerifyPhotoRequested extends AuthEvent {
+  final String customerId;
+  final String photoPath;
+  VerifyPhotoRequested({required this.customerId, required this.photoPath});
+  @override
+  List<Object?> get props => [customerId, photoPath];
+}
+
 /// Check if the stored JWT token is still valid (auto-login on app launch).
 class CheckTokenRequested extends AuthEvent {}
 
@@ -79,6 +87,22 @@ class AuthFailure extends AuthState {
   List<Object?> get props => [message];
 }
 
+class AuthPhotoVerificationRequired extends AuthState {
+  final Customer customer;
+  AuthPhotoVerificationRequired(this.customer);
+  @override
+  List<Object?> get props => [customer];
+}
+
+class VerifyPhotoLoading extends AuthState {}
+
+class VerifyPhotoFailure extends AuthState {
+  final String message;
+  VerifyPhotoFailure(this.message);
+  @override
+  List<Object?> get props => [message];
+}
+
 /// Token is missing or invalid — user must log in.
 class AuthUnauthenticated extends AuthState {}
 
@@ -95,6 +119,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogout);
     on<UpdateProfileRequested>(_onUpdateProfile);
     on<UpdatePasswordRequested>(_onUpdatePassword);
+    on<VerifyPhotoRequested>(_onVerifyPhoto);
+  }
+
+  Future<void> _onVerifyPhoto(
+      VerifyPhotoRequested event, Emitter<AuthState> emit) async {
+    Customer? currentCustomer;
+    if (state is AuthPhotoVerificationRequired) {
+      currentCustomer = (state as AuthPhotoVerificationRequired).customer;
+    }
+
+    emit(VerifyPhotoLoading());
+    final result = await authRepository.verifyPhoto(
+      event.customerId,
+      event.photoPath,
+    );
+
+    result.fold(
+      (failure) {
+        emit(VerifyPhotoFailure(failure.message));
+        if (currentCustomer != null) {
+          emit(AuthPhotoVerificationRequired(currentCustomer));
+        }
+      },
+      (_) {
+        if (currentCustomer != null) {
+          emit(AuthSuccess(currentCustomer));
+        }
+      },
+    );
   }
 
   Future<void> _onCheckToken(
@@ -105,7 +158,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         '[Auth] Stored token: ${token != null ? "${token.substring(0, 20)}..." : "NULL"}');
 
     if (token == null) {
-      debugPrint('[Auth] No token found → login required');
+      debugPrint('[Auth] No token found — login required');
       emit(AuthUnauthenticated());
       return;
     }
@@ -115,7 +168,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) {
         debugPrint('[Auth] ❌ Token validation failed: ${failure.message}');
-        // Only clear token for auth errors, NOT network errors
         if (failure.message.contains('expired') ||
             failure.message.contains('invalid') ||
             failure.message.contains('no longer exists') ||
@@ -127,8 +179,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       },
       (customer) {
         debugPrint(
-            '[Auth] ✅ Token valid → auto-login as ${customer.firstName}');
-        emit(AuthSuccess(customer));
+            '[Auth] ✅ Token valid — photo verification required as ${customer.firstName}');
+        emit(AuthPhotoVerificationRequired(customer));
       },
     );
   }
@@ -146,7 +198,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         (response) async {
           await storage.write(key: 'token', value: response.token);
           await storage.write(key: 'customer_id', value: response.customer.id);
-          emit(AuthSuccess(response.customer));
+          emit(AuthPhotoVerificationRequired(response.customer));
         },
       );
     } catch (e) {
@@ -178,7 +230,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         (response) async {
           await storage.write(key: 'token', value: response.token);
           await storage.write(key: 'customer_id', value: response.customer.id);
-          emit(AuthSuccess(response.customer));
+          emit(AuthPhotoVerificationRequired(response.customer));
         },
       );
     } catch (e) {
@@ -194,9 +246,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onUpdateProfile(
       UpdateProfileRequested event, Emitter<AuthState> emit) async {
-    // We emit AuthLoading but want to keep the current user in state ideally.
-    // However, AuthLoading clears the user unless it's a specific UpdateLoading state.
-    // For simplicity, we just use AuthLoading and then re-emit AuthSuccess.
     emit(AuthLoading());
     final result =
         await authRepository.updateProfile(event.customerId, event.updateData);
@@ -209,9 +258,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onUpdatePassword(
       UpdatePasswordRequested event, Emitter<AuthState> emit) async {
-    // Current customer might be lost during AuthLoading unless preserved.
-    // We can fetch it from current state or assume UI handles it.
-    // For simplicity since we just want to update password, we'll try to preserve it if possible:
     Customer? currentCustomer;
     if (state is AuthSuccess) {
       currentCustomer = (state as AuthSuccess).customer;
@@ -229,16 +275,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) {
         emit(AuthFailure(failure.message));
         if (currentCustomer != null) {
-          // Revert to success to allow user to retry without login requirement
-          // emit(AuthSuccess(currentCustomer));
-          // usually UI handles error dialog
         }
       },
       (successMessage) {
         if (currentCustomer != null) {
           emit(AuthSuccess(currentCustomer));
         } else {
-          // Fallback if state was lost
           add(CheckTokenRequested());
         }
       },

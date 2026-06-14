@@ -38,6 +38,11 @@ abstract class AuthRepository {
     String newPassword,
     String confirmPassword,
   );
+
+  Future<Either<Failure, void>> verifyPhoto(
+    String customerId,
+    String photoPath,
+  );
 }
 
 class AuthResponse {
