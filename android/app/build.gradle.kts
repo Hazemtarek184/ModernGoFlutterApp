@@ -5,6 +5,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Auto-increment versionCode from git commit count (unique per build)
+val gitCommitCount: Int = try {
+    "git rev-list --count HEAD".execute().text.trim().toInt()
+} catch (_: Exception) {
+    flutter.versionCode?.toInt() ?: 1
+}
+
 android {
     namespace = "com.example.modern_go"
     compileSdk = flutter.compileSdkVersion
@@ -22,7 +29,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        versionCode = gitCommitCount
         versionName = flutter.versionName
     }
 
