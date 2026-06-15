@@ -21,7 +21,7 @@ class CustomerModel extends Customer {
       lastName: json['lastName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
-      profilePhoto: json['profilePhoto'],
+      profilePhoto: json['profilePhotoKey'],
       address: json['address'] != null
           ? AddressModel.fromJson(json['address'])
           : null,
