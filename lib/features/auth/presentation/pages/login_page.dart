@@ -4,7 +4,7 @@ import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:modern_go/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:modern_go/features/auth/presentation/pages/verification_photo_page.dart';
-import 'package:modern_go/features/auth/presentation/pages/biometric_page.dart';
+import 'package:modern_go/main_navigation.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
             );
           } else if (state is AuthSuccess) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const BiometricPage()),
+              MaterialPageRoute(builder: (_) => const MainNavigation()),
             );
           } else if (state is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(

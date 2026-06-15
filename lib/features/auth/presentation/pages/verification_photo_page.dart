@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/features/auth/domain/entities/customer.dart';
 import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:modern_go/features/auth/presentation/pages/biometric_page.dart';
+import 'package:modern_go/main_navigation.dart';
 
 class VerificationPhotoPage extends StatefulWidget {
   final Customer customer;
@@ -75,9 +75,8 @@ class _VerificationPhotoPageState extends State<VerificationPhotoPage> {
                 ),
               );
             } else if (state is AuthSuccess) {
-              // Successfully verified and returned to AuthSuccess
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const BiometricPage()),
+                MaterialPageRoute(builder: (_) => const MainNavigation()),
               );
             }
           },
