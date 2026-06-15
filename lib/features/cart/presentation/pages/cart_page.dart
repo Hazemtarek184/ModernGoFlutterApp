@@ -5,6 +5,8 @@ import 'package:modern_go/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:modern_go/features/cart/presentation/widgets/live_scan_indicator.dart';
 import 'package:modern_go/features/cart/presentation/widgets/empty_cart_view.dart';
 import 'package:modern_go/features/cart/presentation/widgets/cart_item_card.dart';
+import 'package:modern_go/features/cart/presentation/widgets/checkout_success_view.dart';
+import 'package:modern_go/main_navigation.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -22,8 +24,7 @@ class CartPage extends StatelessWidget {
           Expanded(
             child: BlocListener<CartBloc, CartState>(
               listenWhen: (previous, current) =>
-                  previous.errorMessage != current.errorMessage ||
-                  previous.checkoutCompleted != current.checkoutCompleted,
+                  previous.errorMessage != current.errorMessage,
               listener: (context, state) {
                 if (state.errorMessage != null && state.errorMessage!.isNotEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -33,46 +34,37 @@ class CartPage extends StatelessWidget {
                     ),
                   );
                 }
-                if (state.checkoutCompleted) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Checkout Successful'),
-                      content: const Text(
-                        'Your shopping session has ended and checkout is complete. A receipt will be available in your account.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop(); // Close dialog
-                            Navigator.of(context).pop(); // Close cart page
-                          },
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
               },
               child: BlocBuilder<CartBloc, CartState>(
                 builder: (context, state) {
                   final isConnected = state.status == CartStatus.connected;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Live Scan indicator
-                    LiveScanIndicator(isConnected: isConnected),
+                  return Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Live Scan indicator
+                          LiveScanIndicator(isConnected: isConnected),
 
-                    // Content
-                    Expanded(
-                      child: state.items.isEmpty
-                          ? const EmptyCartView()
-                          : _buildCartContent(state),
-                    ),
-                  ],
-                );
-              },
+                          // Content
+                          Expanded(
+                            child: state.items.isEmpty
+                                ? const EmptyCartView()
+                                : _buildCartContent(context, state),
+                          ),
+                        ],
+                      ),
+                      if (state.checkoutCompleted)
+                        CheckoutSuccessView(
+                          onDismiss: () {
+                            context.read<CartBloc>().add(CartCheckoutReset());
+                            final navState = context.findAncestorStateOfType<MainNavigationState>();
+                            navState?.setIndex(0); // Switch tab to Home
+                          },
+                        ),
+                    ],
+                  );
+                },
             ),
           ),
         ),
@@ -124,7 +116,7 @@ class CartPage extends StatelessWidget {
   }
 
   /// Cart with items, total, and checkout button
-  Widget _buildCartContent(CartState state) {
+  Widget _buildCartContent(BuildContext context, CartState state) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,13 +147,13 @@ class CartPage extends StatelessWidget {
         ),
 
         // Total + Checkout
-        _buildTotalSection(state),
+        _buildTotalSection(context, state),
       ],
     );
   }
 
   /// Total price row + "Confirm & Checkout" button + footer text
-  Widget _buildTotalSection(CartState state) {
+  Widget _buildTotalSection(BuildContext context, CartState state) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       decoration: BoxDecoration(
@@ -214,7 +206,7 @@ class CartPage extends StatelessWidget {
             height: 50,
             child: ElevatedButton(
               onPressed: () {
-                // Checkout action (to be implemented with Pay feature)
+                context.read<CartBloc>().add(CartCheckoutRequested());
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,

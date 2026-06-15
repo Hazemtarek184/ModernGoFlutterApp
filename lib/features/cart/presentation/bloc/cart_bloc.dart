@@ -29,6 +29,12 @@ class CartConnectRequested extends CartEvent {
 /// Disconnect the socket
 class CartDisconnectRequested extends CartEvent {}
 
+/// Request checkout process and clear cart
+class CartCheckoutRequested extends CartEvent {}
+
+/// Reset checkout completed state
+class CartCheckoutReset extends CartEvent {}
+
 /// Internal: full cart received on connect
 class _CartCurrentReceived extends CartEvent {
   final List<CartItem> items;
@@ -144,6 +150,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         super(const CartState()) {
     on<CartConnectRequested>(_onConnectRequested);
     on<CartDisconnectRequested>(_onDisconnectRequested);
+    on<CartCheckoutRequested>(_onCheckoutRequestedEvent);
+    on<CartCheckoutReset>(_onCheckoutReset);
     on<_CartCurrentReceived>(_onCartCurrentReceived);
     on<_CartUpdateReceived>(_onCartUpdateReceived);
     on<_ConnectionStateChanged>(_onConnectionStateChanged);
@@ -159,6 +167,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     emit(state.copyWith(
       status: CartStatus.connecting,
       sessionReplacedMessage: null,
+      checkoutCompleted: false,
     ));
 
     // Subscribe to socket streams
@@ -207,6 +216,29 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     } catch (e) {
       add(_SocketErrorReceived("Failed to fetch initial cart: $e"));
     }
+  }
+
+  Future<void> _onCheckoutRequestedEvent(
+    CartCheckoutRequested event,
+    Emitter<CartState> emit,
+  ) async {
+    emit(state.copyWith(checkoutCompleted: false));
+    try {
+      await _apiClient.post('/cart/checkout');
+      emit(state.copyWith(
+        checkoutCompleted: true,
+        items: [],
+      ));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: "Checkout failed: $e"));
+    }
+  }
+
+  void _onCheckoutReset(
+    CartCheckoutReset event,
+    Emitter<CartState> emit,
+  ) {
+    emit(state.copyWith(checkoutCompleted: false));
   }
 
   void _onDisconnectRequested(
