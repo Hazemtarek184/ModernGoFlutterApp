@@ -23,6 +23,9 @@ import 'features/health_profile/domain/repositories/health_profile_repository.da
 import 'features/health_profile/domain/usecases/health_profile_usecases.dart';
 import 'features/health_profile/presentation/bloc/health_profile_bloc.dart';
 
+import 'package:modern_go/features/auth/presentation/pages/server_config_page.dart';
+import 'package:modern_go/core/constants/api_constants.dart';
+
 final sl = GetIt.instance;
 
 Future<void> init() async {
@@ -70,11 +73,25 @@ Future<void> init() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await init();
-  runApp(const ModernGoApp());
+
+  final storage = sl<FlutterSecureStorage>();
+  final serverUrl = await storage.read(key: 'server_url');
+  final socketUrl = await storage.read(key: 'socket_url');
+
+  bool isConfigured = false;
+  if (serverUrl != null && serverUrl.isNotEmpty) {
+    ApiConstants.baseUrl = serverUrl;
+    ApiConstants.socketUrl = socketUrl ?? '';
+    isConfigured = true;
+  }
+
+  runApp(ModernGoApp(isConfigured: isConfigured));
 }
 
 class ModernGoApp extends StatelessWidget {
-  const ModernGoApp({super.key});
+  final bool isConfigured;
+
+  const ModernGoApp({super.key, required this.isConfigured});
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +109,9 @@ class ModernGoApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
           textTheme: GoogleFonts.poppinsTextTheme(),
         ),
-        home: const SplashPage(),
+        home: isConfigured ? const SplashPage() : const ServerConfigPage(),
       ),
     );
   }
 }
+

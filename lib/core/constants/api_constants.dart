@@ -1,11 +1,11 @@
 class ApiConstants {
-  static const String baseUrl = 'https://modern-go.vercel.app/api';
+  static String baseUrl = '';
   // static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   // Socket.IO Server (real-time cart)
   // Android emulator: 10.0.2.2 maps to host localhost
   // Physical device: use your computer's LAN IP (e.g., 192.168.x.x)
-  static const String socketUrl = 'http://10.0.2.2:3001';
+  static String socketUrl = '';
 
   // Auth Endpoints
   static const String login = '/customers/login';
