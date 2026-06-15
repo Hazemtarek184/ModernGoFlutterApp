@@ -74,6 +74,19 @@ class _VerificationPhotoPageState extends State<VerificationPhotoPage> {
                   backgroundColor: AppColors.error,
                 ),
               );
+            } else if (state is VerifyPhotoMismatch) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.reason),
+                  backgroundColor: Colors.deepOrange,
+                  duration: const Duration(seconds: 5),
+                  action: SnackBarAction(
+                    label: 'Retake',
+                    textColor: Colors.white,
+                    onPressed: _takePhoto,
+                  ),
+                ),
+              );
             } else if (state is AuthSuccess) {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const MainNavigation()),

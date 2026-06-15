@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:modern_go/core/error/failures.dart';
 import '../entities/customer.dart';
+import '../entities/verify_photo_result.dart';
 
 abstract class AuthRepository {
   Future<Either<Failure, AuthResponse>> login({
@@ -39,7 +40,7 @@ abstract class AuthRepository {
     String confirmPassword,
   );
 
-  Future<Either<Failure, void>> verifyPhoto(
+  Future<Either<Failure, VerifyPhotoResult>> verifyPhoto(
     String customerId,
     String photoPath,
   );

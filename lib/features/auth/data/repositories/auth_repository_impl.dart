@@ -5,6 +5,7 @@ import 'package:modern_go/core/error/failures.dart';
 import 'package:modern_go/features/auth/data/models/customer_model.dart';
 import 'package:modern_go/features/auth/domain/repositories/auth_repository.dart';
 import 'package:modern_go/features/auth/domain/entities/customer.dart';
+import 'package:modern_go/features/auth/domain/entities/verify_photo_result.dart';
 import 'package:modern_go/core/api/api_client.dart';
 import 'package:modern_go/core/constants/api_constants.dart';
 
@@ -217,7 +218,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, void>> verifyPhoto(
+  Future<Either<Failure, VerifyPhotoResult>> verifyPhoto(
     String customerId,
     String photoPath,
   ) async {
@@ -229,12 +230,18 @@ class AuthRepositoryImpl implements AuthRepository {
         ),
       });
 
-      await apiClient.post(
+      final response = await apiClient.post(
         ApiConstants.customerVerifyPhoto(customerId),
         data: formData,
       );
-      
-      return const Right(null);
+
+      final data = response.data['data'] as Map<String, dynamic>;
+
+      return Right(VerifyPhotoResult(
+        status: data['status'] as String? ?? 'unknown',
+        matched: data['matched'] as bool? ?? false,
+        distance: (data['distance'] as num?)?.toDouble(),
+      ));
     } on DioException catch (e) {
       return Left(ServerFailure(_handleDioError(e)));
     } catch (e) {

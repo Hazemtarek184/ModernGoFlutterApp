@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:modern_go/features/auth/domain/repositories/auth_repository.dart';
 import 'package:modern_go/features/auth/domain/entities/customer.dart';
+import 'package:modern_go/features/auth/domain/entities/verify_photo_result.dart';
 
 // Events
 abstract class AuthEvent extends Equatable {
@@ -103,6 +104,14 @@ class VerifyPhotoFailure extends AuthState {
   List<Object?> get props => [message];
 }
 
+class VerifyPhotoMismatch extends AuthState {
+  final String reason;
+  final bool canRetry;
+  VerifyPhotoMismatch({required this.reason, this.canRetry = true});
+  @override
+  List<Object?> get props => [reason, canRetry];
+}
+
 /// Token is missing or invalid — user must log in.
 class AuthUnauthenticated extends AuthState {}
 
@@ -142,12 +151,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(AuthPhotoVerificationRequired(currentCustomer));
         }
       },
-      (_) {
-        if (currentCustomer != null) {
+      (verifyResult) {
+        if (currentCustomer == null) return;
+
+        if (verifyResult.matched) {
           emit(AuthSuccess(currentCustomer));
+        } else {
+          final reason = _mapVerificationStatus(verifyResult.status);
+          emit(VerifyPhotoMismatch(reason: reason));
+          emit(AuthPhotoVerificationRequired(currentCustomer));
         }
       },
     );
+  }
+
+  String _mapVerificationStatus(String status) {
+    switch (status) {
+      case 'face_mismatch':
+        return 'Your face does not match your profile photo. Please ensure good lighting and retake.';
+      case 'no_face_detected':
+        return 'No face detected. Please position your face clearly in the frame and retake.';
+      default:
+        return 'Verification failed. Please retake your photo.';
+    }
   }
 
   Future<void> _onCheckToken(
