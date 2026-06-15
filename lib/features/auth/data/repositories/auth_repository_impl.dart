@@ -241,6 +241,7 @@ class AuthRepositoryImpl implements AuthRepository {
         status: data['status'] as String? ?? 'unknown',
         matched: data['matched'] as bool? ?? false,
         distance: (data['distance'] as num?)?.toDouble(),
+        detail: data['detail'] as String?,
       ));
     } on DioException catch (e) {
       return Left(ServerFailure(_handleDioError(e)));

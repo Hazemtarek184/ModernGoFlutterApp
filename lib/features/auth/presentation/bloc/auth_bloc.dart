@@ -4,7 +4,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:modern_go/features/auth/domain/repositories/auth_repository.dart';
 import 'package:modern_go/features/auth/domain/entities/customer.dart';
-import 'package:modern_go/features/auth/domain/entities/verify_photo_result.dart';
 
 // Events
 abstract class AuthEvent extends Equatable {
@@ -157,7 +156,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (verifyResult.matched) {
           emit(AuthSuccess(currentCustomer));
         } else {
-          final reason = _mapVerificationStatus(verifyResult.status);
+          final reason = verifyResult.detail ?? _mapVerificationStatus(verifyResult.status);
           emit(VerifyPhotoMismatch(reason: reason));
           emit(AuthPhotoVerificationRequired(currentCustomer));
         }
