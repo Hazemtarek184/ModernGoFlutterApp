@@ -41,7 +41,7 @@ Future<void> init() async {
 
   // Features - Cart (Socket.IO)
   sl.registerLazySingleton(() => SocketService());
-  sl.registerFactory(() => CartBloc(socketService: sl()));
+  sl.registerFactory(() => CartBloc(socketService: sl(), apiClient: sl()));
 
   // Features - Home
   sl.registerLazySingleton<HomeRepository>(() => HomeRepositoryImpl(sl()));

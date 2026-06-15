@@ -18,13 +18,15 @@ class CartItem extends Equatable {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    final createdStr = json['createdAt'] ?? json['addedAt'] ?? json['updatedAt'];
+    final updatedStr = json['updatedAt'] ?? createdStr;
     return CartItem(
       id: json['_id'] as String,
       customerId: _extractId(json['customerId']),
       storeProduct: json['storeProductId'],
       quantity: (json['quantity'] as num).toInt(),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: createdStr != null ? DateTime.parse(createdStr as String) : DateTime.now(),
+      updatedAt: updatedStr != null ? DateTime.parse(updatedStr as String) : DateTime.now(),
     );
   }
 

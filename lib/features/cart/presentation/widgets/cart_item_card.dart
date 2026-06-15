@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:modern_go/core/widgets/custom_network_image.dart';
 import 'package:modern_go/core/constants/app_colors.dart';
 import 'package:modern_go/features/cart/domain/entities/cart_item.dart';
 
@@ -41,17 +41,12 @@ class CartItemCard extends StatelessWidget {
                   height: 56,
                   color: AppColors.surface,
                   child: images.isNotEmpty
-                      ? CachedNetworkImage(
+                      ? CustomNetworkImage(
                           imageUrl: images.first,
+                          width: 56,
+                          height: 56,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => const Icon(
+                          errorWidget: const Icon(
                               Icons.shopping_bag_outlined,
                               color: AppColors.primary,
                               size: 28),

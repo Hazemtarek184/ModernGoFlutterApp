@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:modern_go/core/api/api_client.dart';
 import 'package:modern_go/features/cart/data/services/socket_service.dart';
 import 'package:modern_go/features/cart/domain/entities/cart_item.dart';
 import 'package:modern_go/features/cart/domain/entities/cart_update.dart';
@@ -129,6 +130,7 @@ class CartState extends Equatable {
 
 class CartBloc extends Bloc<CartEvent, CartState> {
   final SocketService _socketService;
+  final ApiClient _apiClient;
   StreamSubscription<List<CartItem>>? _cartCurrentSub;
   StreamSubscription<CartUpdate>? _cartUpdateSub;
   StreamSubscription<bool>? _connectionSub;
@@ -136,8 +138,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   StreamSubscription<String>? _checkoutSub;
   StreamSubscription<String>? _errorSub;
 
-  CartBloc({required SocketService socketService})
+  CartBloc({required SocketService socketService, required ApiClient apiClient})
       : _socketService = socketService,
+        _apiClient = apiClient,
         super(const CartState()) {
     on<CartConnectRequested>(_onConnectRequested);
     on<CartDisconnectRequested>(_onDisconnectRequested);
@@ -188,6 +191,22 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       serverUrl: event.serverUrl,
       jwtToken: event.jwtToken,
     );
+
+    // Fetch existing cart items via REST API
+    _loadExistingCart();
+  }
+
+  Future<void> _loadExistingCart() async {
+    try {
+      final response = await _apiClient.get('/cart/me');
+      final cartJson = response.data['data'] as List? ?? [];
+      final items = cartJson
+          .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList();
+      add(_CartCurrentReceived(items));
+    } catch (e) {
+      add(_SocketErrorReceived("Failed to fetch initial cart: $e"));
+    }
   }
 
   void _onDisconnectRequested(
