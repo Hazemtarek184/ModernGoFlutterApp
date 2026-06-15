@@ -100,9 +100,16 @@ class _CheckoutSuccessViewState extends State<CheckoutSuccessView>
 
   final double checkmarkYOffset = 180.0;
 
+  // Statically initialized receipt details to prevent regeneration on tick rebuilds
+  late final String transactionId;
+  late final String dateString;
+
   @override
   void initState() {
     super.initState();
+
+    transactionId = 'MG-${random.nextInt(900000) + 100000}';
+    dateString = _getFormattedDate();
 
     // 1. Initialize Checkmark Scale Animation (elastic pop in)
     _scaleController = AnimationController(
@@ -184,8 +191,6 @@ class _CheckoutSuccessViewState extends State<CheckoutSuccessView>
 
   @override
   Widget build(BuildContext context) {
-    final String transactionId = 'MG-${random.nextInt(900000) + 100000}';
-    final String dateString = _getFormattedDate();
 
     return Container(
       width: double.infinity,
