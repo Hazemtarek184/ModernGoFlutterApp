@@ -7,9 +7,10 @@ plugins {
 
 // Auto-increment versionCode from git commit count (unique per build)
 val gitCommitCount: Int = try {
-    "git rev-list --count HEAD".execute().text.trim().toInt()
+    val process = Runtime.getRuntime().exec(arrayOf("git", "rev-list", "--count", "HEAD"))
+    process.inputStream.bufferedReader().readText().trim().toInt()
 } catch (_: Exception) {
-    flutter.versionCode?.toInt() ?: 1
+    1
 }
 
 android {
