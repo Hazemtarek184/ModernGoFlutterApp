@@ -18,14 +18,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   List<dynamic> _orders = [];
   bool _loading = true;
   String? _errorMessage;
-  List<String> _logs = [];
-
-  void _addLog(String msg) {
-    debugPrint("[OrderHistoryPage] $msg");
-    setState(() {
-      _logs.add(msg);
-    });
-  }
 
   @override
   void initState() {
@@ -37,51 +29,39 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     setState(() {
       _loading = true;
       _errorMessage = null;
-      _logs = ["Starting fetch request..."];
     });
 
     try {
       final cleanCustomerId = widget.customerId.trim();
-      _addLog("Getting customerId: '$cleanCustomerId'");
       if (cleanCustomerId.isEmpty) {
         throw Exception("customerId is empty!");
       }
       
-      _addLog("Resolving ApiClient from GetIt...");
       final client = GetIt.instance<ApiClient>();
-      
       final url = ApiConstants.customerOrders(cleanCustomerId);
-      _addLog("Constructed URL path: $url");
-      _addLog("Base URL is: ${ApiConstants.baseUrl}");
-      
-      _addLog("Sending API GET request...");
       final response = await client.get(url);
-      _addLog("Response received! status: ${response.statusCode}");
       
       if (response.statusCode == 200 && response.data != null) {
-        _addLog("Validating response data structure...");
         final responseData = response.data;
         if (responseData['data'] == null || responseData['data']['orders'] == null) {
-          throw Exception("Response data doesn't contain 'data.orders' payload. Data was: $responseData");
+          throw Exception("Response data doesn't contain 'data.orders' payload.");
         }
         
         final ordersList = responseData['data']['orders'] as List<dynamic>;
-        _addLog("Successfully parsed ${ordersList.length} orders.");
         setState(() {
           _orders = ordersList;
           _loading = false;
         });
       } else {
-        _addLog("Response failed. StatusCode: ${response.statusCode}, Data: ${response.data}");
         setState(() {
           _errorMessage = response.data?['message'] ?? 'Failed to load orders (Status ${response.statusCode})';
           _loading = false;
         });
       }
     } catch (e) {
-      _addLog("❌ Error occurred: $e");
+      debugPrint("Error fetching orders: $e");
       setState(() {
-        _errorMessage = 'Failed to connect to server: $e';
+        _errorMessage = 'Failed to connect to server. Please try again.';
         _loading = false;
       });
     }
@@ -147,46 +127,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
   Widget _buildBody() {
     if (_loading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-              ),
-              const SizedBox(height: 24),
-              const Text("Loading orders...", style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 24),
-              const Text("Console Logs:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 8),
-              Container(
-                height: 220,
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _logs.length,
-                  itemBuilder: (context, idx) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      _logs[idx],
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        color: Colors.greenAccent,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
         ),
       );
     }
