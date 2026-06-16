@@ -33,6 +33,9 @@ class ApiConstants {
   static const String healthProfiles = '/health-profiles/';
   static const String healthProfileMe = '/health-profiles/me';
 
+  // Orders Endpoints
+  static const String myOrders = '/orders/my-orders';
+
   // Helper methods for dynamic paths
   static String customerProfile(String customerId) => '/customers/$customerId';
   static String customerPassword(String customerId) =>

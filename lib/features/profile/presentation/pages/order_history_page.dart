@@ -7,8 +7,7 @@ import 'package:modern_go/core/constants/api_constants.dart';
 import 'package:modern_go/core/constants/app_colors.dart';
 
 class OrderHistoryPage extends StatefulWidget {
-  final String customerId;
-  const OrderHistoryPage({super.key, required this.customerId});
+  const OrderHistoryPage({super.key});
 
   @override
   State<OrderHistoryPage> createState() => _OrderHistoryPageState();
@@ -32,14 +31,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     });
 
     try {
-      final cleanCustomerId = widget.customerId.trim();
-      if (cleanCustomerId.isEmpty) {
-        throw Exception("customerId is empty!");
-      }
-      
       final client = GetIt.instance<ApiClient>();
-      final url = ApiConstants.customerOrders(cleanCustomerId);
-      final response = await client.get(url);
+      final response = await client.get(ApiConstants.myOrders);
       
       if (response.statusCode == 200 && response.data != null) {
         final responseData = response.data;

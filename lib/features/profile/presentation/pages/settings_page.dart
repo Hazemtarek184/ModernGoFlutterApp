@@ -118,7 +118,7 @@ class SettingsPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => OrderHistoryPage(customerId: customer.id)),
+                          builder: (_) => const OrderHistoryPage()),
                     );
                   },
                 ),
