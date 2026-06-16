@@ -39,6 +39,8 @@ class ApiConstants {
       '/customers/$customerId/password';
   static String customerVerifyPhoto(String customerId) =>
       '/customers/$customerId/verify-photo';
+  static String customerOrders(String customerId) =>
+      '/orders/customer/$customerId';
   static String storeById(String storeId) => '/stores/$storeId';
   static String storeProducts(String storeId) => '/stores/$storeId/products';
   static String storesByCategory(String category) =>

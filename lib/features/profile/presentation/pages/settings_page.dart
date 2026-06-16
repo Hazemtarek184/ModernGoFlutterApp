@@ -7,6 +7,7 @@ import 'package:modern_go/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:modern_go/features/profile/presentation/pages/update_profile_page.dart';
 import 'package:modern_go/features/profile/presentation/pages/change_password_page.dart';
 import 'package:modern_go/features/health_profile/presentation/pages/health_profile_page.dart';
+import 'package:modern_go/features/profile/presentation/pages/order_history_page.dart';
 import 'package:modern_go/features/auth/presentation/pages/login_page.dart'
     as modern_go_login;
 
@@ -103,6 +104,21 @@ class SettingsPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (_) => const HealthProfilePage()),
+                    );
+                  },
+                ),
+                const Divider(
+                    height: 1, thickness: 1, color: Color(0xFFD4EAD1)),
+                ListTile(
+                  leading:
+                      const Icon(Icons.history, color: Colors.black87),
+                  title: const Text('Order History',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => OrderHistoryPage(customerId: customer.id)),
                     );
                   },
                 ),
