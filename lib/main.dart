@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'core/api/api_client.dart';
 import 'core/constants/app_colors.dart';
 import 'core/utils/location_service.dart';
@@ -37,6 +39,14 @@ Future<void> init() async {
       resetOnError: true,
     ),
   );
+
+  // Clear secure storage on first run to prevent keychain values persisting across fresh installs.
+  final prefs = await SharedPreferences.getInstance();
+  if (prefs.getBool('is_first_run') ?? true) {
+    await storage.deleteAll();
+    await prefs.setBool('is_first_run', false);
+  }
+
   sl.registerLazySingleton(() => storage);
   sl.registerLazySingleton(() => Dio());
 
