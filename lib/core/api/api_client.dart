@@ -11,6 +11,9 @@ class ApiClient {
     dio.options.baseUrl = ApiConstants.baseUrl;
     dio.options.connectTimeout = const Duration(seconds: 60);
     dio.options.receiveTimeout = const Duration(seconds: 60);
+    // Disable any HTTP-level caching on every request.
+    dio.options.headers['Cache-Control'] = 'no-cache, no-store';
+    dio.options.headers['Pragma'] = 'no-cache';
 
     dio.interceptors.add(PrettyDioLogger(
       requestHeader: true,

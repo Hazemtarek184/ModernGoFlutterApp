@@ -27,7 +27,16 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   // External
-  const storage = FlutterSecureStorage();
+  // resetOnError: true — if the keystore entry is gone after a reinstall
+  // (common on Android), reset storage instead of throwing an exception.
+  // encryptedSharedPreferences: false — use Android Keystore (not EncryptedSharedPrefs)
+  // so that uninstall properly invalidates the keys.
+  const storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: false,
+      resetOnError: true,
+    ),
+  );
   sl.registerLazySingleton(() => storage);
   sl.registerLazySingleton(() => Dio());
 

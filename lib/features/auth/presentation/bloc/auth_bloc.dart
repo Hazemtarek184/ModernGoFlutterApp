@@ -182,7 +182,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     debugPrint(
         '[Auth] Stored token: ${token != null ? "${token.substring(0, 20)}..." : "NULL"}');
 
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       debugPrint('[Auth] No token found — login required');
       emit(AuthUnauthenticated());
       return;
@@ -193,13 +193,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) {
         debugPrint('[Auth] ❌ Token validation failed: ${failure.message}');
-        if (failure.message.contains('expired') ||
-            failure.message.contains('invalid') ||
-            failure.message.contains('no longer exists') ||
-            failure.message.contains('No token provided')) {
-          storage.delete(key: 'token');
-          storage.delete(key: 'customer_id');
-        }
+        // Always wipe storage on ANY validation failure.
+        // flutter_secure_storage persists across reinstalls on Android,
+        // so a stale token must always be cleared — not just on specific errors.
+        storage.deleteAll();
+        debugPrint('[Auth] 🧹 Cleared all secure storage');
         emit(AuthUnauthenticated());
       },
       (customer) {
@@ -264,9 +262,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
-    await storage.delete(key: 'token');
-    await storage.delete(key: 'customer_id');
-    emit(AuthInitial());
+    // Wipe everything — not just individual keys — so no stale data remains.
+    await storage.deleteAll();
+    debugPrint('[Auth] 🧹 Logged out — all secure storage cleared');
+    emit(AuthUnauthenticated());
   }
 
   Future<void> _onUpdateProfile(
