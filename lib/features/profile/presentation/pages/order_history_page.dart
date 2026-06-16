@@ -35,7 +35,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       final client = GetIt.instance<ApiClient>();
       final response = await client.get(ApiConstants.customerOrders(widget.customerId));
       
-      if (response.data != null && response.data['success'] == true) {
+      if (response.statusCode == 200 && response.data != null) {
         final ordersList = response.data['data']['orders'] as List<dynamic>;
         setState(() {
           _orders = ordersList;
