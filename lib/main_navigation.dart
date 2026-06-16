@@ -62,7 +62,7 @@ class MainNavigationState extends State<MainNavigation> {
   /// Called once the user reaches the main navigation (after login + biometric).
   Future<void> _connectSocket() async {
     final storage = GetIt.instance<FlutterSecureStorage>();
-    final token = await storage.read(key: 'token');
+    final token = (await storage.read(key: 'token'))?.trim();
     if (token != null && mounted) {
       context.read<CartBloc>().add(
             CartConnectRequested(

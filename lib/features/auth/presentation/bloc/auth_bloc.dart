@@ -178,7 +178,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onCheckToken(
       CheckTokenRequested event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    final token = await storage.read(key: 'token');
+    final token = (await storage.read(key: 'token'))?.trim();
     debugPrint(
         '[Auth] Stored token: ${token != null ? "${token.substring(0, 20)}..." : "NULL"}');
 

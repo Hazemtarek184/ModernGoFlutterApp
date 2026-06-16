@@ -33,7 +33,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   void _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
       final storage = GetIt.instance<FlutterSecureStorage>();
-      final customerId = await storage.read(key: 'customer_id');
+      final customerId = (await storage.read(key: 'customer_id'))?.trim();
 
       if (customerId != null) {
         if (mounted) {
