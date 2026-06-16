@@ -5,6 +5,7 @@ import 'package:modern_go/core/api/api_client.dart';
 import 'package:modern_go/features/cart/data/services/socket_service.dart';
 import 'package:modern_go/features/cart/domain/entities/cart_item.dart';
 import 'package:modern_go/features/cart/domain/entities/cart_update.dart';
+import 'package:modern_go/features/cart/domain/entities/cart_warning.dart';
 
 // ─── Cart Status ─────────────────────────────────────────────────────
 
@@ -83,10 +84,19 @@ class _SocketErrorReceived extends CartEvent {
   List<Object?> get props => [message];
 }
 
+/// Internal: health warnings received from AI
+class _HealthWarningsReceived extends CartEvent {
+  final List<CartWarning> warnings;
+  _HealthWarningsReceived(this.warnings);
+  @override
+  List<Object?> get props => [warnings];
+}
+
 // ─── State ───────────────────────────────────────────────────────────
 
 class CartState extends Equatable {
   final List<CartItem> items;
+  final List<CartWarning> warnings;
   final CartStatus status;
   final String? lastAction; // "pick" or "release"
   final String? sessionReplacedMessage;
@@ -95,6 +105,7 @@ class CartState extends Equatable {
 
   const CartState({
     this.items = const [],
+    this.warnings = const [],
     this.status = CartStatus.disconnected,
     this.lastAction,
     this.sessionReplacedMessage,
@@ -108,8 +119,15 @@ class CartState extends Equatable {
   /// Total price of all items
   double get totalPrice => items.fold(0.0, (sum, item) => sum + item.lineTotal);
 
+  /// Whether there are any health warnings
+  bool get hasWarnings => warnings.isNotEmpty;
+
+  /// Whether there are any critical warnings
+  bool get hasCriticalWarnings => warnings.any((w) => w.isCritical);
+
   CartState copyWith({
     List<CartItem>? items,
+    List<CartWarning>? warnings,
     CartStatus? status,
     String? lastAction,
     String? sessionReplacedMessage,
@@ -118,6 +136,7 @@ class CartState extends Equatable {
   }) {
     return CartState(
       items: items ?? this.items,
+      warnings: warnings ?? this.warnings,
       status: status ?? this.status,
       lastAction: lastAction ?? this.lastAction,
       sessionReplacedMessage:
@@ -129,7 +148,7 @@ class CartState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [items, status, lastAction, sessionReplacedMessage, checkoutCompleted, errorMessage];
+      [items, warnings, status, lastAction, sessionReplacedMessage, checkoutCompleted, errorMessage];
 }
 
 // ─── Bloc ────────────────────────────────────────────────────────────
@@ -143,6 +162,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   StreamSubscription<String>? _sessionSub;
   StreamSubscription<String>? _checkoutSub;
   StreamSubscription<String>? _errorSub;
+  StreamSubscription<List<CartWarning>>? _warningSub;
 
   CartBloc({required SocketService socketService, required ApiClient apiClient})
       : _socketService = socketService,
@@ -158,6 +178,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<_SessionReplaced>(_onSessionReplaced);
     on<_CheckoutCompleted>(_onCheckoutCompleted);
     on<_SocketErrorReceived>(_onSocketErrorReceived);
+    on<_HealthWarningsReceived>(_onHealthWarningsReceived);
   }
 
   void _onConnectRequested(
@@ -195,24 +216,47 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       add(_SocketErrorReceived(message));
     });
 
+    _warningSub = _socketService.healthWarnings.listen((warnings) {
+      add(_HealthWarningsReceived(warnings));
+    });
+
     // Initiate connection
     _socketService.connect(
       serverUrl: event.serverUrl,
       jwtToken: event.jwtToken,
     );
 
-    // Fetch existing cart items via REST API
+    // Fetch existing cart items via REST API (also returns warnings)
     _loadExistingCart();
   }
 
   Future<void> _loadExistingCart() async {
     try {
       final response = await _apiClient.get('/cart/me');
-      final cartJson = response.data['data'] as List? ?? [];
-      final items = cartJson
-          .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList();
-      add(_CartCurrentReceived(items));
+      final data = response.data['data'] as Map<String, dynamic>?;
+
+      if (data != null) {
+        // New structured response: { cart: [...], warnings: [...] }
+        final cartJson = data['cart'] as List? ?? [];
+        final items = cartJson
+            .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+
+        final warningsJson = data['warnings'] as List? ?? [];
+        final warnings = warningsJson
+            .map((e) => CartWarning.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+
+        add(_CartCurrentReceived(items));
+        add(_HealthWarningsReceived(warnings));
+      } else {
+        // Fallback: old flat list response
+        final cartJson = response.data['data'] as List? ?? [];
+        final items = cartJson
+            .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        add(_CartCurrentReceived(items));
+      }
     } catch (e) {
       add(_SocketErrorReceived("Failed to fetch initial cart: $e"));
     }
@@ -228,6 +272,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       emit(state.copyWith(
         checkoutCompleted: true,
         items: [],
+        warnings: [],
       ));
     } catch (e) {
       emit(state.copyWith(errorMessage: "Checkout failed: $e"));
@@ -292,7 +337,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     _CheckoutCompleted event,
     Emitter<CartState> emit,
   ) {
-    emit(state.copyWith(checkoutCompleted: true, items: [])); // Clear items
+    emit(state.copyWith(checkoutCompleted: true, items: [], warnings: []));
   }
 
   void _onSocketErrorReceived(
@@ -302,6 +347,13 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     emit(state.copyWith(errorMessage: event.message));
   }
 
+  void _onHealthWarningsReceived(
+    _HealthWarningsReceived event,
+    Emitter<CartState> emit,
+  ) {
+    emit(state.copyWith(warnings: event.warnings));
+  }
+
   void _cancelSubscriptions() {
     _cartCurrentSub?.cancel();
     _cartUpdateSub?.cancel();
@@ -309,12 +361,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     _sessionSub?.cancel();
     _checkoutSub?.cancel();
     _errorSub?.cancel();
+    _warningSub?.cancel();
     _cartCurrentSub = null;
     _cartUpdateSub = null;
     _connectionSub = null;
     _sessionSub = null;
     _checkoutSub = null;
     _errorSub = null;
+    _warningSub = null;
   }
 
   @override
@@ -323,3 +377,5 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     return super.close();
   }
 }
+
+

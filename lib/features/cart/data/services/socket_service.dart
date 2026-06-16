@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:modern_go/features/cart/domain/entities/cart_item.dart';
 import 'package:modern_go/features/cart/domain/entities/cart_update.dart';
+import 'package:modern_go/features/cart/domain/entities/cart_warning.dart';
 
 /// Manages the Socket.IO connection to the Modern Go backend for real-time
 /// cart updates from the AI vision system.
@@ -19,6 +20,7 @@ class SocketService {
   final _connectionStateController = StreamController<bool>.broadcast();
   final _checkoutCompletedController = StreamController<String>.broadcast();
   final _socketErrorController = StreamController<String>.broadcast();
+  final _warningsController = StreamController<List<CartWarning>>.broadcast();
 
   // ─── Public Streams ────────────────────────────────────────────────
 
@@ -39,6 +41,9 @@ class SocketService {
 
   /// Emits error messages
   Stream<String> get socketError => _socketErrorController.stream;
+
+  /// Emits health warnings from AI analysis of the cart
+  Stream<List<CartWarning>> get healthWarnings => _warningsController.stream;
 
   /// Whether the socket is currently connected
   bool get isConnected => _socket?.connected ?? false;
@@ -102,6 +107,14 @@ class SocketService {
             .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
         _cartCurrentController.add(cartItems);
+
+        // Parse and emit warnings if present
+        if (map['warnings'] != null) {
+          final warningsList = (map['warnings'] as List)
+              .map((e) => CartWarning.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList();
+          _warningsController.add(warningsList);
+        }
       } catch (e) {
         // Error parsing cart:current — logged silently
       }
@@ -112,6 +125,9 @@ class SocketService {
         final map = Map<String, dynamic>.from(data as Map);
         final update = CartUpdate.fromJson(map);
         _cartUpdateController.add(update);
+
+        // Emit warnings carried in the update
+        _warningsController.add(update.warnings);
       } catch (e) {
         // Error parsing cart:updated — logged silently
       }
@@ -172,5 +188,6 @@ class SocketService {
     _connectionStateController.close();
     _checkoutCompletedController.close();
     _socketErrorController.close();
+    _warningsController.close();
   }
 }
